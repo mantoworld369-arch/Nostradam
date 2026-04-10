@@ -1,35 +1,43 @@
 # ============================================
-# NOSTRADAM CONFIG — Phase 1 Paper Trading
+# NOSTRADAM CONFIG — v0.2 Session-Based
 # ============================================
 
-# --- Mode ---
-paper_trade: true  # KEEP TRUE until you trust the bot
+paper_trade: true
 
 # --- Capital ---
-bankroll: 100.0          # Starting paper bankroll (USD)
-max_bet_pct: 0.05        # Max 5% of bankroll per trade
-min_bet: 1.0             # Minimum bet size (USD)
-max_bet: 20.0            # Hard cap per trade (USD)
+bankroll: 100.0
+max_bet_pct: 0.05
+min_bet: 1.0
+max_bet: 20.0
 
-# --- Inefficiency Detection ---
+# --- Session ---
+session_duration_minutes: 30   # Bot trades for 30 min, then optimizes
+
+# --- Strategy ---
 strategy:
-  min_edge: 0.03          # Minimum edge (3%) to trigger a trade
-  spread_threshold: 0.05  # Max spread to consider market liquid enough
-  volume_min: 500         # Min market volume (USD) to trade
-  lookback_trades: 12     # Number of past resolved markets to analyze
-  mean_reversion_window: 5  # Minutes to look for odds mean-reversion
-  momentum_threshold: 0.08  # Odds shift in one direction to flag momentum
+  min_edge: 0.03
+  spread_threshold: 0.05
+  volume_min: 500
+  lookback_trades: 12
+  mean_reversion_window: 5
+  momentum_threshold: 0.08
+  enabled_signals:
+    - mean_reversion
+    - book_imbalance
+    - momentum
+    - spread_compression
+    - stale_odds
 
-# --- Risk Management ---
+# --- Risk ---
 risk:
-  max_daily_loss_pct: 0.15    # Stop trading if down 15% in a day
-  max_drawdown_pct: 0.25      # Kill switch: halt if 25% drawdown from peak
-  max_open_positions: 3       # Max simultaneous paper positions
-  cooldown_after_loss: 2      # Skip N markets after a loss streak of 3+
+  max_daily_loss_pct: 0.15
+  max_drawdown_pct: 0.25
+  max_open_positions: 3
+  cooldown_after_loss: 2
 
 # --- Timing ---
-cycle_interval_seconds: 30   # How often to check for new markets
-market_duration_minutes: 5   # Duration of each prediction market
+cycle_interval_seconds: 30
+market_duration_minutes: 5
 
 # --- Dashboard ---
 dashboard:
@@ -38,5 +46,5 @@ dashboard:
   port: 5050
 
 # --- Logging ---
-log_level: INFO   # DEBUG for verbose
+log_level: INFO
 db_path: "nostradam.db"
