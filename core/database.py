@@ -36,8 +36,7 @@ def init_db(conn):
         mid_yes REAL,
         volume REAL,
         book_depth_yes REAL,
-        book_depth_no REAL,
-        FOREIGN KEY(market_id) REFERENCES markets(id)
+        book_depth_no REAL
     );
 
     CREATE TABLE IF NOT EXISTS trades (
@@ -59,8 +58,7 @@ def init_db(conn):
         signal_type TEXT,
         resolved INTEGER DEFAULT 0,
         won INTEGER,
-        meta TEXT,
-        FOREIGN KEY(market_id) REFERENCES markets(id)
+        meta TEXT
     );
 
     CREATE TABLE IF NOT EXISTS sessions (
@@ -84,22 +82,7 @@ def init_db(conn):
     CREATE INDEX IF NOT EXISTS idx_trades_market ON trades(market_id);
     CREATE INDEX IF NOT EXISTS idx_trades_session ON trades(session_id);
     """)
-
-    # Add columns if upgrading from old schema
-    _safe_add_column(conn, "trades", "session_id", "INTEGER DEFAULT 0")
-    _safe_add_column(conn, "trades", "entry_mid", "REAL")
-    _safe_add_column(conn, "trades", "entry_ask", "REAL")
-    _safe_add_column(conn, "trades", "entry_spread", "REAL")
-    _safe_add_column(conn, "trades", "current_price", "REAL")
-
     conn.commit()
-
-
-def _safe_add_column(conn, table, column, col_type):
-    try:
-        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
-    except sqlite3.OperationalError:
-        pass  # column already exists
 
 
 def log_market(conn, market):
@@ -139,10 +122,7 @@ def log_trade(conn, trade):
 
 
 def update_trade_current_price(conn, trade_id, current_price):
-    conn.execute(
-        "UPDATE trades SET current_price=? WHERE id=?",
-        (current_price, trade_id)
-    )
+    conn.execute("UPDATE trades SET current_price=? WHERE id=?", (current_price, trade_id))
     conn.commit()
 
 
@@ -194,23 +174,26 @@ def get_session_performance(conn, session_id):
 
 
 def get_signal_performance(conn, session_id=None):
-    """Get win rate broken down by signal type."""
-    where = f"WHERE session_id={session_id}" if session_id else ""
-    rows = conn.execute(f"""
-        SELECT signal_type,
-            COUNT(*) as total,
-            SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins,
-            SUM(CASE WHEN resolved=1 THEN pnl ELSE 0 END) as pnl,
-            AVG(edge_at_entry) as avg_edge
-        FROM trades {where}
-        WHERE resolved=1
-        GROUP BY signal_type
-    """).fetchall()
+    if session_id:
+        rows = conn.execute("""
+            SELECT signal_type, COUNT(*) as total,
+                SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins,
+                SUM(CASE WHEN resolved=1 THEN pnl ELSE 0 END) as pnl,
+                AVG(edge_at_entry) as avg_edge
+            FROM trades WHERE resolved=1 AND session_id=? GROUP BY signal_type
+        """, (session_id,)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT signal_type, COUNT(*) as total,
+                SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins,
+                SUM(CASE WHEN resolved=1 THEN pnl ELSE 0 END) as pnl,
+                AVG(edge_at_entry) as avg_edge
+            FROM trades WHERE resolved=1 GROUP BY signal_type
+        """).fetchall()
     return [dict(r) for r in rows]
 
 
 def get_edge_range_performance(conn, session_id=None):
-    """Get performance by edge bucket."""
     where = f"AND session_id={session_id}" if session_id else ""
     rows = conn.execute(f"""
         SELECT
@@ -223,22 +206,18 @@ def get_edge_range_performance(conn, session_id=None):
             COUNT(*) as total,
             SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins,
             SUM(CASE WHEN resolved=1 THEN pnl ELSE 0 END) as pnl
-        FROM trades WHERE resolved=1 {where}
-        GROUP BY edge_bucket
+        FROM trades WHERE resolved=1 {where} GROUP BY edge_bucket
     """).fetchall()
     return [dict(r) for r in rows]
 
 
 def get_side_performance(conn, session_id=None):
-    """Get performance by YES/NO side."""
     where = f"AND session_id={session_id}" if session_id else ""
     rows = conn.execute(f"""
-        SELECT side,
-            COUNT(*) as total,
+        SELECT side, COUNT(*) as total,
             SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins,
             SUM(CASE WHEN resolved=1 THEN pnl ELSE 0 END) as pnl
-        FROM trades WHERE resolved=1 {where}
-        GROUP BY side
+        FROM trades WHERE resolved=1 {where} GROUP BY side
     """).fetchall()
     return [dict(r) for r in rows]
 

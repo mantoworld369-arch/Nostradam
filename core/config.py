@@ -14,9 +14,3 @@ def load_config(path="config.yaml"):
         "private_key": os.getenv("PRIVATE_KEY", ""),
     }
     return cfg
-
-def save_config(cfg, path="config.yaml"):
-    """Save config back to yaml (for self-optimization)."""
-    save_cfg = {k: v for k, v in cfg.items() if k != "api"}
-    with open(path, "w") as f:
-        yaml.dump(save_cfg, f, default_flow_style=False)

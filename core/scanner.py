@@ -1,9 +1,9 @@
 """
-Scanner: Discovers active BTC 5-minute prediction markets on Polymarket.
-Market slug pattern: btc-updown-5m-{UNIX_TIMESTAMP}
+Scanner: Discovers BTC 5-min markets and extracts market state info.
 """
 
 import logging
+import re
 import time
 import requests
 from datetime import datetime, timezone
@@ -20,6 +20,19 @@ class MarketScanner:
         self.known_markets = {}
         self.session = requests.Session()
         self.session.headers.update({"Content-Type": "application/json"})
+        # Shared market state for dashboard
+        self.active_market_state = {
+            "btc_target": None,
+            "question": "",
+            "slug": "",
+            "yes_price": None,
+            "no_price": None,
+            "volume": 0,
+            "liquidity": 0,
+            "end_time": None,
+            "seconds_remaining": None,
+            "active": False,
+        }
 
     def fetch_btc_minute_markets(self):
         markets = []
@@ -35,8 +48,61 @@ class MarketScanner:
                 unique.append(m)
                 self.known_markets[key] = m
 
+        # Update active market state (pick the most current unresolved market)
+        self._update_active_state(unique)
+
         log.info(f"Found {len(unique)} active BTC 5-min markets")
         return unique
+
+    def _update_active_state(self, markets):
+        """Track the current active market for dashboard display."""
+        now = datetime.now(timezone.utc)
+        best = None
+        best_remaining = 999999
+
+        for m in markets:
+            if m.get("resolved"):
+                continue
+            end_time = m.get("end_time", "")
+            if not end_time:
+                continue
+            try:
+                end_dt = datetime.fromisoformat(end_time.replace("Z", "+00:00"))
+                remaining = (end_dt - now).total_seconds()
+                if 0 < remaining < best_remaining:
+                    best_remaining = remaining
+                    best = m
+            except (ValueError, AttributeError):
+                continue
+
+        if best:
+            btc_target = self._extract_btc_price(best.get("question", ""))
+            self.active_market_state = {
+                "btc_target": btc_target,
+                "question": best.get("question", ""),
+                "slug": best.get("slug", ""),
+                "yes_price": best.get("yes_price"),
+                "no_price": best.get("no_price"),
+                "volume": best.get("volume", 0),
+                "liquidity": best.get("liquidity", 0),
+                "end_time": best.get("end_time", ""),
+                "seconds_remaining": max(0, int(best_remaining)),
+                "active": True,
+            }
+        else:
+            self.active_market_state["active"] = False
+            self.active_market_state["seconds_remaining"] = 0
+
+    def _extract_btc_price(self, question):
+        """Extract BTC price target from question like 'Will BTC be above $84,500 at 18:30?'"""
+        match = re.search(r'\$[\d,]+(?:\.\d+)?', question)
+        if match:
+            price_str = match.group().replace('$', '').replace(',', '')
+            try:
+                return float(price_str)
+            except ValueError:
+                pass
+        return None
 
     def _fetch_by_slug_pattern(self):
         markets = []
