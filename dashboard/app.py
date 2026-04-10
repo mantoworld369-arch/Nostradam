@@ -1,14 +1,11 @@
-"""
-Dashboard: Flask web UI for monitoring Nostradam.
-"""
+"""Dashboard: Flask web UI for Nostradam."""
 
-import json
 from flask import Flask, render_template, jsonify
 from core import database as db
 
 
 def create_app(conn, trader):
-    app = Flask(__name__, template_folder="dashboard/templates")
+    app = Flask(__name__, template_folder="templates")
 
     @app.route("/")
     def index():
@@ -19,8 +16,8 @@ def create_app(conn, trader):
         perf = db.get_performance(conn)
         state = trader.get_state()
         total = perf.get("total", 0)
-        wins = perf.get("wins", 0)
-        losses = perf.get("losses", 0)
+        wins = perf.get("wins", 0) or 0
+        losses = perf.get("losses", 0) or 0
         resolved = wins + losses
         return jsonify({
             "trader": state,
@@ -39,11 +36,32 @@ def create_app(conn, trader):
     @app.route("/api/trades")
     def api_trades():
         trades = db.get_recent_trades(conn, limit=100)
-        return jsonify([dict(t) for t in trades])
+        result = []
+        for t in trades:
+            d = dict(t)
+            # Calculate unrealized P&L for open positions
+            if not d.get("resolved") and d.get("current_price") and d.get("entry_price"):
+                cur = d["current_price"]
+                entry = d["entry_price"]
+                size = d["size"]
+                # If current bid > entry price, we're in profit
+                if cur > 0:
+                    current_value = size * (cur / entry)
+                    d["unrealized_pnl"] = round(current_value - size, 2)
+                else:
+                    d["unrealized_pnl"] = 0
+            else:
+                d["unrealized_pnl"] = None
+            result.append(d)
+        return jsonify(result)
 
-    @app.route("/api/snapshots")
-    def api_snapshots():
-        snaps = db.get_recent_snapshots(conn, limit=300)
-        return jsonify([dict(s) for s in snaps])
+    @app.route("/api/sessions")
+    def api_sessions():
+        sessions = db.get_sessions(conn, limit=20)
+        return jsonify([dict(s) for s in sessions])
+
+    @app.route("/api/signals")
+    def api_signals():
+        return jsonify(db.get_signal_performance(conn))
 
     return app
