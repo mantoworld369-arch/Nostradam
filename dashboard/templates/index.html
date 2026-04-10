@@ -6,60 +6,57 @@
 <title>NOSTRADAM</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Outfit:wght@300;600;800&display=swap');
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   :root {
-    --bg: #0a0a0f;
-    --surface: #12121a;
-    --border: #1e1e2e;
-    --text: #c8c8d4;
-    --text-dim: #6b6b80;
-    --accent: #00e5a0;
-    --accent-dim: #00e5a033;
-    --red: #ff4d6a;
-    --red-dim: #ff4d6a22;
-    --yellow: #ffc23a;
-    --yellow-dim: #ffc23a22;
-    --blue: #4da6ff;
-    --blue-dim: #4da6ff18;
+    --bg: #0a0a0f; --surface: #12121a; --border: #1e1e2e;
+    --text: #c8c8d4; --text-dim: #6b6b80;
+    --accent: #00e5a0; --accent-dim: #00e5a033;
+    --red: #ff4d6a; --red-dim: #ff4d6a22;
+    --yellow: #ffc23a; --yellow-dim: #ffc23a22;
+    --blue: #4da6ff; --blue-dim: #4da6ff18;
     --purple: #b48eff;
   }
+  body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
 
-  body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; min-height: 100vh; }
+  /* Market bar */
+  .market-bar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 10px 28px; display: flex; gap: 32px; align-items: center; font-size: 12px;
+  }
+  .market-bar .label { color: var(--text-dim); font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; }
+  .market-bar .val { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 16px; margin-top: 2px; }
+  .market-bar .val.big { font-size: 20px; color: var(--yellow); }
+  .countdown { color: var(--accent); font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 22px; }
+  .market-inactive { color: var(--text-dim); font-style: italic; }
 
-  .header { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .header { padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
   .logo { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; }
   .logo span { color: var(--text-dim); font-weight: 300; font-size: 11px; letter-spacing: 1px; margin-left: 12px; }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; display: inline-block; margin-right: 8px; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; display: inline-block; margin-right: 6px; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
   .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 28px; }
-  .tab { padding: 12px 20px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab { padding: 10px 18px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; }
   .tab:hover { color: var(--text); }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--border); margin: 20px 28px; border: 1px solid var(--border); }
-  .card { background: var(--surface); padding: 16px 20px; }
-  .card-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
-  .card-value { font-size: 24px; font-weight: 700; font-family: 'Outfit', sans-serif; }
-  .card-sub { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
-  .green { color: var(--accent); }
-  .red { color: var(--red); }
-  .neutral { color: var(--text); }
-  .yellow { color: var(--yellow); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); margin: 16px 28px; border: 1px solid var(--border); }
+  .card { background: var(--surface); padding: 14px 18px; }
+  .card-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 4px; }
+  .card-value { font-size: 22px; font-weight: 700; font-family: 'Outfit', sans-serif; }
+  .green { color: var(--accent); } .red { color: var(--red); } .neutral { color: var(--text); } .yellow { color: var(--yellow); }
 
-  .section { margin: 20px 28px; }
-  .section-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+  .section { margin: 16px 28px; }
+  .section-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
 
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th { text-align: left; padding: 7px 10px; font-weight: 400; color: var(--text-dim); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  th { text-align: left; padding: 6px 10px; font-weight: 400; color: var(--text-dim); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
   td { padding: 8px 10px; border-bottom: 1px solid #1a1a24; }
   tr:hover td { background: #1a1a24; }
 
-  .tag { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 10px; font-weight: 600; }
   .tag-yes { background: var(--accent-dim); color: var(--accent); }
   .tag-no { background: var(--red-dim); color: var(--red); }
   .tag-win { background: var(--accent-dim); color: var(--accent); }
@@ -67,21 +64,45 @@
   .tag-open { background: var(--yellow-dim); color: var(--yellow); }
   .tag-signal { background: var(--blue-dim); color: var(--blue); }
 
-  .session-card { background: var(--surface); border: 1px solid var(--border); padding: 16px; margin-bottom: 8px; display: grid; grid-template-columns: 60px 1fr 100px 100px 100px 120px; align-items: center; gap: 12px; }
-  .session-card .session-id { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 18px; color: var(--purple); }
-  .session-card .session-notes { font-size: 10px; color: var(--text-dim); max-height: 40px; overflow: hidden; }
+  .pnl-live { font-size: 10px; color: var(--yellow); margin-left: 4px; }
+  .pnl-closed { font-size: 10px; color: var(--text-dim); margin-left: 4px; }
 
-  .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
-  .footer { text-align: center; padding: 24px; color: var(--text-dim); font-size: 10px; letter-spacing: 1px; }
+  /* Sessions */
+  .session-card { background: var(--surface); border: 1px solid var(--border); padding: 14px; margin-bottom: 6px; display: grid; grid-template-columns: 55px 1fr 90px 80px 100px 120px; align-items: center; gap: 10px; }
+  .session-card .sid { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 18px; color: var(--purple); }
+  .session-card .snotes { font-size: 10px; color: var(--text-dim); max-height: 36px; overflow: hidden; }
+
+  /* Settings panel */
+  .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .setting-item { background: var(--surface); border: 1px solid var(--border); padding: 16px; border-radius: 4px; }
+  .setting-item label { display: block; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+  .setting-item input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; font-family: 'JetBrains Mono', monospace; font-size: 14px; border-radius: 3px; }
+  .setting-item input:focus { outline: none; border-color: var(--accent); }
+  .setting-item .hint { font-size: 10px; color: var(--text-dim); margin-top: 6px; }
+  .save-btn { background: var(--accent); color: #000; border: none; padding: 10px 28px; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1px; cursor: pointer; border-radius: 3px; margin-top: 16px; }
+  .save-btn:hover { opacity: 0.85; }
+  .save-msg { color: var(--accent); font-size: 11px; margin-left: 12px; display: none; }
+
+  .empty-state { text-align: center; padding: 40px; color: var(--text-dim); }
+  .footer { text-align: center; padding: 20px; color: var(--text-dim); font-size: 10px; letter-spacing: 1px; }
 </style>
 </head>
 <body>
 
+<!-- Market status bar -->
+<div class="market-bar" id="market-bar">
+  <div><div class="label">BTC Target</div><div class="val big" id="mb-btc">—</div></div>
+  <div><div class="label">YES / NO</div><div class="val" id="mb-odds">— / —</div></div>
+  <div><div class="label">Volume</div><div class="val" id="mb-vol">—</div></div>
+  <div><div class="label">Market</div><div class="val" id="mb-slug" style="font-size:11px;color:var(--text-dim)">—</div></div>
+  <div style="margin-left:auto"><div class="label">Time Left</div><div class="countdown" id="mb-time">—</div></div>
+</div>
+
 <div class="header">
-  <div class="logo">NOSTRADAM <span>v0.2 — Self-Optimizing</span></div>
-  <div style="color: var(--text-dim); font-size: 11px;">
-    <span class="status-dot"></span>
-    <span id="status">Connecting...</span> · Session <span id="session-id">—</span>
+  <div class="logo">NOSTRADAM <span>v0.3</span></div>
+  <div style="color:var(--text-dim);font-size:11px">
+    <span class="status-dot"></span><span id="status">Connecting...</span> · Session <span id="session-id">—</span>
+    · <span id="live-sess-stats" style="color:var(--yellow)"></span>
   </div>
 </div>
 
@@ -90,76 +111,91 @@
   <div class="tab" data-tab="trades">Trades</div>
   <div class="tab" data-tab="sessions">Sessions</div>
   <div class="tab" data-tab="signals">Signals</div>
+  <div class="tab" data-tab="settings">Settings</div>
 </div>
 
-<!-- OVERVIEW TAB -->
+<!-- OVERVIEW -->
 <div id="tab-overview" class="tab-content active">
   <div class="grid">
-    <div class="card">
-      <div class="card-label">Bankroll</div>
-      <div class="card-value neutral" id="bankroll">$—</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Total P&L</div>
-      <div class="card-value neutral" id="pnl">$—</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Win Rate</div>
-      <div class="card-value neutral" id="winrate">—%</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Trades</div>
-      <div class="card-value neutral" id="trades-count">—</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Avg Edge</div>
-      <div class="card-value neutral" id="avg-edge">—%</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Drawdown</div>
-      <div class="card-value neutral" id="drawdown">—%</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Open Positions</div>
-      <div class="card-value neutral" id="open-pos">—</div>
-    </div>
-    <div class="card">
-      <div class="card-label">Daily P&L</div>
-      <div class="card-value neutral" id="daily-pnl">$—</div>
-    </div>
+    <div class="card"><div class="card-label">Bankroll</div><div class="card-value neutral" id="bankroll">$—</div></div>
+    <div class="card"><div class="card-label">Total P&L</div><div class="card-value neutral" id="pnl">$—</div></div>
+    <div class="card"><div class="card-label">Win Rate</div><div class="card-value neutral" id="winrate">—%</div></div>
+    <div class="card"><div class="card-label">Trades</div><div class="card-value neutral" id="trades-count">—</div></div>
+    <div class="card"><div class="card-label">Avg Edge</div><div class="card-value neutral" id="avg-edge">—%</div></div>
+    <div class="card"><div class="card-label">Drawdown</div><div class="card-value neutral" id="drawdown">—%</div></div>
+    <div class="card"><div class="card-label">Open Positions</div><div class="card-value neutral" id="open-pos">—</div></div>
+    <div class="card"><div class="card-label">Daily P&L</div><div class="card-value neutral" id="daily-pnl">$—</div></div>
   </div>
-
-  <div class="section">
-    <div class="section-title">Latest Trades</div>
-    <div id="overview-trades"></div>
-  </div>
+  <div class="section"><div class="section-title">Latest Trades</div><div id="overview-trades"></div></div>
 </div>
 
-<!-- TRADES TAB -->
+<!-- TRADES -->
 <div id="tab-trades" class="tab-content">
-  <div class="section">
-    <div class="section-title">All Trades</div>
-    <div id="trades-table"></div>
-  </div>
+  <div class="section"><div class="section-title">All Trades</div><div id="trades-table"></div></div>
 </div>
 
-<!-- SESSIONS TAB -->
+<!-- SESSIONS -->
 <div id="tab-sessions" class="tab-content">
-  <div class="section">
-    <div class="section-title">Session History</div>
-    <div id="sessions-list"></div>
-  </div>
+  <div class="section"><div class="section-title">Session History</div><div id="sessions-list"></div></div>
 </div>
 
-<!-- SIGNALS TAB -->
+<!-- SIGNALS -->
 <div id="tab-signals" class="tab-content">
+  <div class="section"><div class="section-title">Signal Performance</div><div id="signals-table"></div></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="tab-settings" class="tab-content">
   <div class="section">
-    <div class="section-title">Signal Performance</div>
-    <div id="signals-table"></div>
+    <div class="section-title">Risk & Sizing — Changes Apply Instantly</div>
+    <div class="settings-grid">
+      <div class="setting-item">
+        <label>Max Bet Size (%)</label>
+        <input type="number" id="set-max-bet-pct" step="0.01" min="0.01" max="0.5">
+        <div class="hint">% of bankroll per trade (e.g. 0.05 = 5%)</div>
+      </div>
+      <div class="setting-item">
+        <label>Min Bet ($)</label>
+        <input type="number" id="set-min-bet" step="0.5" min="0.5">
+        <div class="hint">Smallest allowed bet</div>
+      </div>
+      <div class="setting-item">
+        <label>Max Bet ($)</label>
+        <input type="number" id="set-max-bet" step="1" min="1">
+        <div class="hint">Hard cap per trade</div>
+      </div>
+      <div class="setting-item">
+        <label>Min Edge (%)</label>
+        <input type="number" id="set-min-edge" step="0.005" min="0.01" max="0.5">
+        <div class="hint">Minimum edge to trigger trade (e.g. 0.03 = 3%)</div>
+      </div>
+      <div class="setting-item">
+        <label>Daily Loss Limit (%)</label>
+        <input type="number" id="set-daily-loss" step="0.05" min="0.05" max="1.0">
+        <div class="hint">Stop trading when daily loss exceeds this (e.g. 0.25 = 25%)</div>
+      </div>
+      <div class="setting-item">
+        <label>Max Drawdown (%)</label>
+        <input type="number" id="set-max-dd" step="0.05" min="0.05" max="1.0">
+        <div class="hint">Kill switch — halt if drawdown from peak exceeds this</div>
+      </div>
+      <div class="setting-item">
+        <label>Max Open Positions</label>
+        <input type="number" id="set-max-pos" step="1" min="1" max="20">
+        <div class="hint">Simultaneous open trades allowed</div>
+      </div>
+      <div class="setting-item">
+        <label>Cooldown After Loss Streak</label>
+        <input type="number" id="set-cooldown" step="1" min="0" max="20">
+        <div class="hint">Skip N markets after 3+ consecutive losses</div>
+      </div>
+    </div>
+    <button class="save-btn" onclick="saveSettings()">SAVE SETTINGS</button>
+    <span class="save-msg" id="save-msg">Settings saved!</span>
   </div>
 </div>
 
-<div class="footer">NOSTRADAM v0.2 — PAPER MODE — Refreshes every 10s</div>
+<div class="footer">NOSTRADAM v0.3 — PAPER MODE — Refreshes every 10s</div>
 
 <script>
   // Tabs
@@ -169,37 +205,50 @@
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+      if (tab.dataset.tab === 'settings') loadSettings();
     });
   });
 
-  function fmt(n, prefix='') {
-    if (n === null || n === undefined || isNaN(n)) return '—';
-    return prefix + Number(n).toFixed(2);
-  }
-  function cc(val) { return val > 0 ? 'green' : val < 0 ? 'red' : 'neutral'; }
+  function fmt(n, pre='') { return (n===null||n===undefined||isNaN(n)) ? '—' : pre+Number(n).toFixed(2); }
+  function cc(v) { return v > 0 ? 'green' : v < 0 ? 'red' : 'neutral'; }
+
+  // Countdown timer
+  let marketEndTime = null;
+  setInterval(() => {
+    const el = document.getElementById('mb-time');
+    if (!marketEndTime) { el.textContent = '—'; return; }
+    const remaining = Math.max(0, Math.floor((new Date(marketEndTime) - new Date()) / 1000));
+    const m = Math.floor(remaining / 60);
+    const s = remaining % 60;
+    el.textContent = `${m}:${s.toString().padStart(2, '0')}`;
+    el.style.color = remaining < 30 ? 'var(--red)' : 'var(--accent)';
+  }, 1000);
 
   function buildTradeRow(tr) {
     const time = tr.ts_entry ? new Date(tr.ts_entry).toLocaleTimeString() : '—';
     const sideClass = tr.side === 'YES' ? 'tag-yes' : 'tag-no';
+    let resultTag, pnlStr, pnlColor, pnlLabel;
 
-    let resultTag, pnlStr, pnlColor;
     if (tr.resolved) {
       resultTag = tr.won ? '<span class="tag tag-win">WIN</span>' : '<span class="tag tag-loss">LOSS</span>';
       pnlStr = fmt(tr.pnl, '$');
       pnlColor = tr.pnl > 0 ? 'color:var(--accent)' : tr.pnl < 0 ? 'color:var(--red)' : '';
+      pnlLabel = '<span class="pnl-closed">(closed)</span>';
     } else {
       resultTag = '<span class="tag tag-open">OPEN</span>';
       if (tr.unrealized_pnl !== null && tr.unrealized_pnl !== undefined) {
-        pnlStr = fmt(tr.unrealized_pnl, '$') + ' ⟳';
+        pnlStr = fmt(tr.unrealized_pnl, '$');
         pnlColor = tr.unrealized_pnl > 0 ? 'color:var(--accent)' : tr.unrealized_pnl < 0 ? 'color:var(--red)' : 'color:var(--yellow)';
+        pnlLabel = '<span class="pnl-live">(live)</span>';
       } else {
         pnlStr = '—';
         pnlColor = '';
+        pnlLabel = '';
       }
     }
 
     const entryMid = tr.entry_mid ? ` <span style="color:var(--text-dim);font-size:10px">(mid ${Number(tr.entry_mid).toFixed(3)})</span>` : '';
-    const spreadInfo = tr.entry_spread ? ` <span style="color:var(--text-dim);font-size:10px">spr ${(Number(tr.entry_spread)*100).toFixed(1)}%</span>` : '';
+    const spr = tr.entry_spread ? ` <span style="color:var(--text-dim);font-size:10px">spr ${(Number(tr.entry_spread)*100).toFixed(1)}%</span>` : '';
 
     return `<tr>
       <td>${time}</td>
@@ -207,101 +256,133 @@
       <td><span class="tag tag-signal">${tr.signal_type || '—'}</span></td>
       <td>${Number(tr.entry_price).toFixed(3)}${entryMid}</td>
       <td>$${Number(tr.size).toFixed(2)}</td>
-      <td>${(Number(tr.edge_at_entry) * 100).toFixed(1)}%${spreadInfo}</td>
-      <td style="${pnlColor}">${pnlStr}</td>
+      <td>${(Number(tr.edge_at_entry)*100).toFixed(1)}%${spr}</td>
+      <td style="${pnlColor}">${pnlStr} ${pnlLabel}</td>
       <td>${resultTag}</td>
-      <td style="color:var(--text-dim);font-size:10px">${tr.session_id || '—'}</td>
+      <td style="color:var(--text-dim);font-size:10px">${tr.session_id||'—'}</td>
     </tr>`;
   }
 
   function buildTradeTable(trades) {
-    if (!trades || trades.length === 0) return '<div class="empty-state">No trades yet</div>';
-    let html = '<table><thead><tr><th>Time</th><th>Side</th><th>Signal</th><th>Entry (ask)</th><th>Size</th><th>Edge</th><th>P&L</th><th>Result</th><th>Sess</th></tr></thead><tbody>';
-    trades.forEach(tr => html += buildTradeRow(tr));
-    html += '</tbody></table>';
-    return html;
+    if (!trades || !trades.length) return '<div class="empty-state">No trades yet</div>';
+    let h = '<table><thead><tr><th>Time</th><th>Side</th><th>Signal</th><th>Entry</th><th>Size</th><th>Edge</th><th>P&L</th><th>Result</th><th>Sess</th></tr></thead><tbody>';
+    trades.forEach(tr => h += buildTradeRow(tr));
+    return h + '</tbody></table>';
   }
 
   async function refresh() {
     try {
-      const [stateRes, tradesRes, sessionsRes, signalsRes] = await Promise.all([
+      const [stateR, tradesR, sessR, sigR] = await Promise.all([
         fetch('/api/state'), fetch('/api/trades'), fetch('/api/sessions'), fetch('/api/signals')
       ]);
-      const state = await stateRes.json();
-      const trades = await tradesRes.json();
-      const sessions = await sessionsRes.json();
-      const signals = await signalsRes.json();
+      const state = await stateR.json();
+      const trades = await tradesR.json();
+      const sessions = await sessR.json();
+      const signals = await sigR.json();
 
-      const t = state.trader;
-      const p = state.performance;
+      const t = state.trader, p = state.performance, m = state.market, ls = state.live_session;
 
+      // Market bar
+      if (m && m.active) {
+        document.getElementById('mb-btc').textContent = m.btc_target ? '$' + Number(m.btc_target).toLocaleString() : '—';
+        document.getElementById('mb-odds').innerHTML = `<span class="green">${m.yes_price ? (m.yes_price * 100).toFixed(1) + '%' : '—'}</span> / <span class="red">${m.no_price ? (m.no_price * 100).toFixed(1) + '%' : '—'}</span>`;
+        document.getElementById('mb-vol').textContent = m.volume ? '$' + Number(m.volume).toLocaleString(undefined,{maximumFractionDigits:0}) : '—';
+        document.getElementById('mb-slug').textContent = m.slug || '—';
+        marketEndTime = m.end_time || null;
+      } else {
+        document.getElementById('mb-btc').textContent = '—';
+        document.getElementById('mb-odds').textContent = '— / —';
+        document.getElementById('mb-slug').textContent = 'Waiting for market...';
+        marketEndTime = null;
+      }
+
+      // Status
       document.getElementById('status').textContent = 'Live — Paper Mode';
       document.getElementById('session-id').textContent = t.session_id || '—';
+      document.getElementById('live-sess-stats').textContent = ls.id ? `S${ls.id}: ${ls.total}t ${ls.wins}W/${ls.losses}L $${ls.pnl}` : '';
 
+      // Cards
       document.getElementById('bankroll').textContent = fmt(t.bankroll, '$');
       document.getElementById('bankroll').className = 'card-value ' + cc(t.bankroll - 100);
       document.getElementById('pnl').textContent = fmt(p.total_pnl, '$');
       document.getElementById('pnl').className = 'card-value ' + cc(p.total_pnl);
       document.getElementById('winrate').textContent = p.win_rate + '%';
-      document.getElementById('winrate').className = 'card-value ' + (p.win_rate >= 55 ? 'green' : p.win_rate < 45 ? 'red' : 'neutral');
+      document.getElementById('winrate').className = 'card-value ' + (p.win_rate>=55?'green':p.win_rate<45?'red':'neutral');
       document.getElementById('trades-count').textContent = p.total_trades;
       document.getElementById('avg-edge').textContent = p.avg_edge + '%';
       document.getElementById('drawdown').textContent = t.drawdown + '%';
-      document.getElementById('drawdown').className = 'card-value ' + (t.drawdown > 10 ? 'red' : 'neutral');
+      document.getElementById('drawdown').className = 'card-value ' + (t.drawdown>10?'red':'neutral');
       document.getElementById('open-pos').textContent = p.open_positions;
       document.getElementById('daily-pnl').textContent = fmt(t.daily_pnl, '$');
       document.getElementById('daily-pnl').className = 'card-value ' + cc(t.daily_pnl);
 
-      // Overview — latest 10
+      // Trades
       document.getElementById('overview-trades').innerHTML = buildTradeTable(trades.slice(0, 10));
-
-      // All trades
       document.getElementById('trades-table').innerHTML = buildTradeTable(trades);
 
       // Sessions
-      if (sessions.length > 0) {
-        let shtml = '';
+      if (sessions.length) {
+        let sh = '';
         sessions.forEach(s => {
-          const wr = s.win_rate ? s.win_rate + '%' : '—';
-          const pnlC = (s.total_pnl||0) > 0 ? 'green' : (s.total_pnl||0) < 0 ? 'red' : 'neutral';
-          shtml += `<div class="session-card">
-            <div class="session-id">#${s.id}</div>
-            <div>
-              <div style="font-size:11px">${s.started_at ? new Date(s.started_at).toLocaleString() : 'Running...'}</div>
-              <div class="session-notes">${(s.optimization_notes || '').substring(0, 120)}</div>
-            </div>
-            <div>${s.total_trades || 0} trades</div>
+          const wr = s.win_rate ? s.win_rate+'%' : '—';
+          const pc = (s.total_pnl||0)>0?'green':(s.total_pnl||0)<0?'red':'neutral';
+          const isActive = s.id === t.session_id && !s.ended_at;
+          const badge = isActive ? ' <span style="color:var(--accent);font-size:10px">ACTIVE</span>' : '';
+          sh += `<div class="session-card" style="${isActive?'border-color:var(--accent)':''}">
+            <div class="sid">#${s.id}${badge}</div>
+            <div><div style="font-size:11px">${s.started_at?new Date(s.started_at).toLocaleString():'—'}</div>
+            <div class="snotes">${(s.optimization_notes||'').substring(0,120)}</div></div>
+            <div>${s.total_trades||0} trades</div>
             <div>${wr}</div>
-            <div class="${pnlC}">${fmt(s.total_pnl, '$')}</div>
-            <div style="font-size:10px;color:var(--text-dim)">Best: ${s.best_signal || '—'}</div>
+            <div class="${pc}">${fmt(s.total_pnl,'$')}</div>
+            <div style="font-size:10px;color:var(--text-dim)">Best: ${s.best_signal||'—'}</div>
           </div>`;
         });
-        document.getElementById('sessions-list').innerHTML = shtml;
+        document.getElementById('sessions-list').innerHTML = sh;
       }
 
-      // Signal performance
-      if (signals.length > 0) {
-        let sightml = '<table><thead><tr><th>Signal</th><th>Trades</th><th>Wins</th><th>Win Rate</th><th>P&L</th><th>Avg Edge</th></tr></thead><tbody>';
+      // Signals
+      if (signals.length) {
+        let sg = '<table><thead><tr><th>Signal</th><th>Trades</th><th>Wins</th><th>Win Rate</th><th>P&L</th><th>Avg Edge</th></tr></thead><tbody>';
         signals.forEach(s => {
-          const wr = s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) + '%' : '—';
-          const wrC = s.total > 0 && (s.wins/s.total) >= 0.55 ? 'green' : (s.wins/s.total) < 0.45 ? 'red' : 'neutral';
-          const pnlC = (s.pnl||0) > 0 ? 'color:var(--accent)' : (s.pnl||0) < 0 ? 'color:var(--red)' : '';
-          sightml += `<tr>
-            <td><span class="tag tag-signal">${s.signal_type}</span></td>
-            <td>${s.total}</td>
-            <td>${s.wins}</td>
-            <td class="${wrC}">${wr}</td>
-            <td style="${pnlC}">${fmt(s.pnl, '$')}</td>
-            <td>${((s.avg_edge||0)*100).toFixed(1)}%</td>
-          </tr>`;
+          const wr = s.total>0?((s.wins/s.total)*100).toFixed(1)+'%':'—';
+          const wc = s.total>0&&(s.wins/s.total)>=0.55?'green':(s.wins/s.total)<0.45?'red':'neutral';
+          const pc = (s.pnl||0)>0?'color:var(--accent)':(s.pnl||0)<0?'color:var(--red)':'';
+          sg += `<tr><td><span class="tag tag-signal">${s.signal_type}</span></td><td>${s.total}</td><td>${s.wins}</td><td class="${wc}">${wr}</td><td style="${pc}">${fmt(s.pnl,'$')}</td><td>${((s.avg_edge||0)*100).toFixed(1)}%</td></tr>`;
         });
-        sightml += '</tbody></table>';
-        document.getElementById('signals-table').innerHTML = sightml;
+        document.getElementById('signals-table').innerHTML = sg + '</tbody></table>';
       }
+    } catch(e) { document.getElementById('status').textContent = 'Connection error'; }
+  }
 
-    } catch (e) {
-      document.getElementById('status').textContent = 'Connection error';
-    }
+  async function loadSettings() {
+    const r = await fetch('/api/settings');
+    const s = await r.json();
+    document.getElementById('set-max-bet-pct').value = s.max_bet_pct;
+    document.getElementById('set-min-bet').value = s.min_bet;
+    document.getElementById('set-max-bet').value = s.max_bet;
+    document.getElementById('set-min-edge').value = s.min_edge;
+    document.getElementById('set-daily-loss').value = s.max_daily_loss_pct;
+    document.getElementById('set-max-dd').value = s.max_drawdown_pct;
+    document.getElementById('set-max-pos').value = s.max_open_positions;
+    document.getElementById('set-cooldown').value = s.cooldown_after_loss;
+  }
+
+  async function saveSettings() {
+    const data = {
+      max_bet_pct: parseFloat(document.getElementById('set-max-bet-pct').value),
+      min_bet: parseFloat(document.getElementById('set-min-bet').value),
+      max_bet: parseFloat(document.getElementById('set-max-bet').value),
+      min_edge: parseFloat(document.getElementById('set-min-edge').value),
+      max_daily_loss_pct: parseFloat(document.getElementById('set-daily-loss').value),
+      max_drawdown_pct: parseFloat(document.getElementById('set-max-dd').value),
+      max_open_positions: parseInt(document.getElementById('set-max-pos').value),
+      cooldown_after_loss: parseInt(document.getElementById('set-cooldown').value),
+    };
+    await fetch('/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
+    const msg = document.getElementById('save-msg');
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 3000);
   }
 
   refresh();
