@@ -20,283 +20,284 @@
     --red: #ff4d6a;
     --red-dim: #ff4d6a22;
     --yellow: #ffc23a;
+    --yellow-dim: #ffc23a22;
     --blue: #4da6ff;
+    --blue-dim: #4da6ff18;
+    --purple: #b48eff;
   }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    min-height: 100vh;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; min-height: 100vh; }
 
-  .header {
-    padding: 24px 32px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .logo {
-    font-family: 'Outfit', sans-serif;
-    font-weight: 800;
-    font-size: 22px;
-    letter-spacing: 4px;
-    color: var(--accent);
-    text-transform: uppercase;
-  }
-
+  .header { padding: 20px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 20px; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; }
   .logo span { color: var(--text-dim); font-weight: 300; font-size: 11px; letter-spacing: 1px; margin-left: 12px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; display: inline-block; margin-right: 8px; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-  .status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent);
-    animation: pulse 2s infinite;
-    display: inline-block;
-    margin-right: 8px;
-  }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 28px; }
+  .tab { padding: 12px 20px; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1px; background: var(--border); margin: 20px 28px; border: 1px solid var(--border); }
+  .card { background: var(--surface); padding: 16px 20px; }
+  .card-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+  .card-value { font-size: 24px; font-weight: 700; font-family: 'Outfit', sans-serif; }
+  .card-sub { font-size: 10px; color: var(--text-dim); margin-top: 4px; }
+  .green { color: var(--accent); }
+  .red { color: var(--red); }
+  .neutral { color: var(--text); }
+  .yellow { color: var(--yellow); }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1px;
-    background: var(--border);
-    margin: 24px 32px;
-    border: 1px solid var(--border);
-  }
+  .section { margin: 20px 28px; }
+  .section-title { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
 
-  .card {
-    background: var(--surface);
-    padding: 20px 24px;
-  }
-
-  .card-label {
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-  }
-
-  .card-value {
-    font-size: 28px;
-    font-weight: 700;
-    font-family: 'Outfit', sans-serif;
-  }
-
-  .card-value.green { color: var(--accent); }
-  .card-value.red { color: var(--red); }
-  .card-value.neutral { color: var(--text); }
-
-  .section {
-    margin: 24px 32px;
-  }
-
-  .section-title {
-    font-size: 10px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 12px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-  }
-
-  th {
-    text-align: left;
-    padding: 8px 12px;
-    font-weight: 400;
-    color: var(--text-dim);
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
-
-  td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #1a1a24;
-  }
-
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; padding: 7px 10px; font-weight: 400; color: var(--text-dim); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid #1a1a24; }
   tr:hover td { background: #1a1a24; }
 
-  .tag {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
   .tag-yes { background: var(--accent-dim); color: var(--accent); }
   .tag-no { background: var(--red-dim); color: var(--red); }
   .tag-win { background: var(--accent-dim); color: var(--accent); }
   .tag-loss { background: var(--red-dim); color: var(--red); }
-  .tag-open { background: #ffc23a22; color: var(--yellow); }
+  .tag-open { background: var(--yellow-dim); color: var(--yellow); }
+  .tag-signal { background: var(--blue-dim); color: var(--blue); }
 
-  .tag-signal {
-    background: #4da6ff18;
-    color: var(--blue);
-  }
+  .session-card { background: var(--surface); border: 1px solid var(--border); padding: 16px; margin-bottom: 8px; display: grid; grid-template-columns: 60px 1fr 100px 100px 100px 120px; align-items: center; gap: 12px; }
+  .session-card .session-id { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 18px; color: var(--purple); }
+  .session-card .session-notes { font-size: 10px; color: var(--text-dim); max-height: 40px; overflow: hidden; }
 
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-dim);
-  }
-
-  .empty-state p { margin-top: 8px; font-size: 11px; }
-
-  .footer {
-    text-align: center;
-    padding: 32px;
-    color: var(--text-dim);
-    font-size: 10px;
-    letter-spacing: 1px;
-  }
+  .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
+  .footer { text-align: center; padding: 24px; color: var(--text-dim); font-size: 10px; letter-spacing: 1px; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <div class="logo">NOSTRADAM <span>Phase 1 — Paper Trading</span></div>
+  <div class="logo">NOSTRADAM <span>v0.2 — Self-Optimizing</span></div>
   <div style="color: var(--text-dim); font-size: 11px;">
     <span class="status-dot"></span>
-    <span id="status">Connecting...</span>
+    <span id="status">Connecting...</span> · Session <span id="session-id">—</span>
   </div>
 </div>
 
-<div class="grid" id="stats-grid">
-  <div class="card">
-    <div class="card-label">Bankroll</div>
-    <div class="card-value neutral" id="bankroll">$—</div>
-  </div>
-  <div class="card">
-    <div class="card-label">Total P&L</div>
-    <div class="card-value neutral" id="pnl">$—</div>
-  </div>
-  <div class="card">
-    <div class="card-label">Win Rate</div>
-    <div class="card-value neutral" id="winrate">—%</div>
-  </div>
-  <div class="card">
-    <div class="card-label">Trades</div>
-    <div class="card-value neutral" id="trades-count">—</div>
-  </div>
-  <div class="card">
-    <div class="card-label">Avg Edge</div>
-    <div class="card-value neutral" id="avg-edge">—%</div>
-  </div>
-  <div class="card">
-    <div class="card-label">Drawdown</div>
-    <div class="card-value neutral" id="drawdown">—%</div>
-  </div>
-  <div class="card">
-    <div class="card-label">Open Positions</div>
-    <div class="card-value neutral" id="open-pos">—</div>
-  </div>
-  <div class="card">
-    <div class="card-label">Daily P&L</div>
-    <div class="card-value neutral" id="daily-pnl">$—</div>
-  </div>
+<div class="tabs">
+  <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab" data-tab="trades">Trades</div>
+  <div class="tab" data-tab="sessions">Sessions</div>
+  <div class="tab" data-tab="signals">Signals</div>
 </div>
 
-<div class="section">
-  <div class="section-title">Recent Trades</div>
-  <div id="trades-table">
-    <div class="empty-state">
-      <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
-      <p>Waiting for first trade...</p>
+<!-- OVERVIEW TAB -->
+<div id="tab-overview" class="tab-content active">
+  <div class="grid">
+    <div class="card">
+      <div class="card-label">Bankroll</div>
+      <div class="card-value neutral" id="bankroll">$—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Total P&L</div>
+      <div class="card-value neutral" id="pnl">$—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Win Rate</div>
+      <div class="card-value neutral" id="winrate">—%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Trades</div>
+      <div class="card-value neutral" id="trades-count">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Avg Edge</div>
+      <div class="card-value neutral" id="avg-edge">—%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Drawdown</div>
+      <div class="card-value neutral" id="drawdown">—%</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Open Positions</div>
+      <div class="card-value neutral" id="open-pos">—</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Daily P&L</div>
+      <div class="card-value neutral" id="daily-pnl">$—</div>
     </div>
   </div>
+
+  <div class="section">
+    <div class="section-title">Latest Trades</div>
+    <div id="overview-trades"></div>
+  </div>
 </div>
 
-<div class="footer">NOSTRADAM v0.1 — PAPER MODE — Auto-refreshes every 10s</div>
+<!-- TRADES TAB -->
+<div id="tab-trades" class="tab-content">
+  <div class="section">
+    <div class="section-title">All Trades</div>
+    <div id="trades-table"></div>
+  </div>
+</div>
+
+<!-- SESSIONS TAB -->
+<div id="tab-sessions" class="tab-content">
+  <div class="section">
+    <div class="section-title">Session History</div>
+    <div id="sessions-list"></div>
+  </div>
+</div>
+
+<!-- SIGNALS TAB -->
+<div id="tab-signals" class="tab-content">
+  <div class="section">
+    <div class="section-title">Signal Performance</div>
+    <div id="signals-table"></div>
+  </div>
+</div>
+
+<div class="footer">NOSTRADAM v0.2 — PAPER MODE — Refreshes every 10s</div>
 
 <script>
+  // Tabs
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
   function fmt(n, prefix='') {
-    if (n === null || n === undefined) return '—';
+    if (n === null || n === undefined || isNaN(n)) return '—';
     return prefix + Number(n).toFixed(2);
   }
+  function cc(val) { return val > 0 ? 'green' : val < 0 ? 'red' : 'neutral'; }
 
-  function colorClass(val) {
-    if (val > 0) return 'green';
-    if (val < 0) return 'red';
-    return 'neutral';
+  function buildTradeRow(tr) {
+    const time = tr.ts_entry ? new Date(tr.ts_entry).toLocaleTimeString() : '—';
+    const sideClass = tr.side === 'YES' ? 'tag-yes' : 'tag-no';
+
+    let resultTag, pnlStr, pnlColor;
+    if (tr.resolved) {
+      resultTag = tr.won ? '<span class="tag tag-win">WIN</span>' : '<span class="tag tag-loss">LOSS</span>';
+      pnlStr = fmt(tr.pnl, '$');
+      pnlColor = tr.pnl > 0 ? 'color:var(--accent)' : tr.pnl < 0 ? 'color:var(--red)' : '';
+    } else {
+      resultTag = '<span class="tag tag-open">OPEN</span>';
+      if (tr.unrealized_pnl !== null && tr.unrealized_pnl !== undefined) {
+        pnlStr = fmt(tr.unrealized_pnl, '$') + ' ⟳';
+        pnlColor = tr.unrealized_pnl > 0 ? 'color:var(--accent)' : tr.unrealized_pnl < 0 ? 'color:var(--red)' : 'color:var(--yellow)';
+      } else {
+        pnlStr = '—';
+        pnlColor = '';
+      }
+    }
+
+    const entryMid = tr.entry_mid ? ` <span style="color:var(--text-dim);font-size:10px">(mid ${Number(tr.entry_mid).toFixed(3)})</span>` : '';
+    const spreadInfo = tr.entry_spread ? ` <span style="color:var(--text-dim);font-size:10px">spr ${(Number(tr.entry_spread)*100).toFixed(1)}%</span>` : '';
+
+    return `<tr>
+      <td>${time}</td>
+      <td><span class="tag ${sideClass}">${tr.side}</span></td>
+      <td><span class="tag tag-signal">${tr.signal_type || '—'}</span></td>
+      <td>${Number(tr.entry_price).toFixed(3)}${entryMid}</td>
+      <td>$${Number(tr.size).toFixed(2)}</td>
+      <td>${(Number(tr.edge_at_entry) * 100).toFixed(1)}%${spreadInfo}</td>
+      <td style="${pnlColor}">${pnlStr}</td>
+      <td>${resultTag}</td>
+      <td style="color:var(--text-dim);font-size:10px">${tr.session_id || '—'}</td>
+    </tr>`;
+  }
+
+  function buildTradeTable(trades) {
+    if (!trades || trades.length === 0) return '<div class="empty-state">No trades yet</div>';
+    let html = '<table><thead><tr><th>Time</th><th>Side</th><th>Signal</th><th>Entry (ask)</th><th>Size</th><th>Edge</th><th>P&L</th><th>Result</th><th>Sess</th></tr></thead><tbody>';
+    trades.forEach(tr => html += buildTradeRow(tr));
+    html += '</tbody></table>';
+    return html;
   }
 
   async function refresh() {
     try {
-      const [stateRes, tradesRes] = await Promise.all([
-        fetch('/api/state'),
-        fetch('/api/trades')
+      const [stateRes, tradesRes, sessionsRes, signalsRes] = await Promise.all([
+        fetch('/api/state'), fetch('/api/trades'), fetch('/api/sessions'), fetch('/api/signals')
       ]);
       const state = await stateRes.json();
       const trades = await tradesRes.json();
+      const sessions = await sessionsRes.json();
+      const signals = await signalsRes.json();
 
       const t = state.trader;
       const p = state.performance;
 
       document.getElementById('status').textContent = 'Live — Paper Mode';
+      document.getElementById('session-id').textContent = t.session_id || '—';
+
       document.getElementById('bankroll').textContent = fmt(t.bankroll, '$');
-      document.getElementById('bankroll').className = 'card-value ' + colorClass(t.bankroll - 100);
-
+      document.getElementById('bankroll').className = 'card-value ' + cc(t.bankroll - 100);
       document.getElementById('pnl').textContent = fmt(p.total_pnl, '$');
-      document.getElementById('pnl').className = 'card-value ' + colorClass(p.total_pnl);
-
+      document.getElementById('pnl').className = 'card-value ' + cc(p.total_pnl);
       document.getElementById('winrate').textContent = p.win_rate + '%';
       document.getElementById('winrate').className = 'card-value ' + (p.win_rate >= 55 ? 'green' : p.win_rate < 45 ? 'red' : 'neutral');
-
       document.getElementById('trades-count').textContent = p.total_trades;
       document.getElementById('avg-edge').textContent = p.avg_edge + '%';
       document.getElementById('drawdown').textContent = t.drawdown + '%';
       document.getElementById('drawdown').className = 'card-value ' + (t.drawdown > 10 ? 'red' : 'neutral');
       document.getElementById('open-pos').textContent = p.open_positions;
-
       document.getElementById('daily-pnl').textContent = fmt(t.daily_pnl, '$');
-      document.getElementById('daily-pnl').className = 'card-value ' + colorClass(t.daily_pnl);
+      document.getElementById('daily-pnl').className = 'card-value ' + cc(t.daily_pnl);
 
-      // Trades table
-      if (trades.length === 0) return;
+      // Overview — latest 10
+      document.getElementById('overview-trades').innerHTML = buildTradeTable(trades.slice(0, 10));
 
-      let html = '<table><thead><tr><th>Time</th><th>Side</th><th>Signal</th><th>Entry</th><th>Size</th><th>Edge</th><th>P&L</th><th>Result</th></tr></thead><tbody>';
-      for (const tr of trades) {
-        const time = tr.ts_entry ? new Date(tr.ts_entry).toLocaleTimeString() : '—';
-        const sideClass = tr.side === 'YES' ? 'tag-yes' : 'tag-no';
-        let resultTag = '<span class="tag tag-open">OPEN</span>';
-        if (tr.resolved) {
-          resultTag = tr.won ? '<span class="tag tag-win">WIN</span>' : '<span class="tag tag-loss">LOSS</span>';
-        }
-        const pnlStr = tr.resolved ? fmt(tr.pnl, '$') : '—';
-        const pnlColor = tr.pnl > 0 ? 'color:var(--accent)' : tr.pnl < 0 ? 'color:var(--red)' : '';
+      // All trades
+      document.getElementById('trades-table').innerHTML = buildTradeTable(trades);
 
-        html += `<tr>
-          <td>${time}</td>
-          <td><span class="tag ${sideClass}">${tr.side}</span></td>
-          <td><span class="tag tag-signal">${tr.signal_type || '—'}</span></td>
-          <td>${Number(tr.entry_price).toFixed(3)}</td>
-          <td>$${Number(tr.size).toFixed(2)}</td>
-          <td>${(Number(tr.edge_at_entry) * 100).toFixed(1)}%</td>
-          <td style="${pnlColor}">${pnlStr}</td>
-          <td>${resultTag}</td>
-        </tr>`;
+      // Sessions
+      if (sessions.length > 0) {
+        let shtml = '';
+        sessions.forEach(s => {
+          const wr = s.win_rate ? s.win_rate + '%' : '—';
+          const pnlC = (s.total_pnl||0) > 0 ? 'green' : (s.total_pnl||0) < 0 ? 'red' : 'neutral';
+          shtml += `<div class="session-card">
+            <div class="session-id">#${s.id}</div>
+            <div>
+              <div style="font-size:11px">${s.started_at ? new Date(s.started_at).toLocaleString() : 'Running...'}</div>
+              <div class="session-notes">${(s.optimization_notes || '').substring(0, 120)}</div>
+            </div>
+            <div>${s.total_trades || 0} trades</div>
+            <div>${wr}</div>
+            <div class="${pnlC}">${fmt(s.total_pnl, '$')}</div>
+            <div style="font-size:10px;color:var(--text-dim)">Best: ${s.best_signal || '—'}</div>
+          </div>`;
+        });
+        document.getElementById('sessions-list').innerHTML = shtml;
       }
-      html += '</tbody></table>';
-      document.getElementById('trades-table').innerHTML = html;
+
+      // Signal performance
+      if (signals.length > 0) {
+        let sightml = '<table><thead><tr><th>Signal</th><th>Trades</th><th>Wins</th><th>Win Rate</th><th>P&L</th><th>Avg Edge</th></tr></thead><tbody>';
+        signals.forEach(s => {
+          const wr = s.total > 0 ? ((s.wins / s.total) * 100).toFixed(1) + '%' : '—';
+          const wrC = s.total > 0 && (s.wins/s.total) >= 0.55 ? 'green' : (s.wins/s.total) < 0.45 ? 'red' : 'neutral';
+          const pnlC = (s.pnl||0) > 0 ? 'color:var(--accent)' : (s.pnl||0) < 0 ? 'color:var(--red)' : '';
+          sightml += `<tr>
+            <td><span class="tag tag-signal">${s.signal_type}</span></td>
+            <td>${s.total}</td>
+            <td>${s.wins}</td>
+            <td class="${wrC}">${wr}</td>
+            <td style="${pnlC}">${fmt(s.pnl, '$')}</td>
+            <td>${((s.avg_edge||0)*100).toFixed(1)}%</td>
+          </tr>`;
+        });
+        sightml += '</tbody></table>';
+        document.getElementById('signals-table').innerHTML = sightml;
+      }
 
     } catch (e) {
       document.getElementById('status').textContent = 'Connection error';
