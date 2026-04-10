@@ -1,19 +1,12 @@
-# ============================================
-# NOSTRADAM CONFIG — v0.3
-# ============================================
-
 paper_trade: true
 
-# --- Capital ---
 bankroll: 100.0
 max_bet_pct: 0.05
 min_bet: 1.0
 max_bet: 20.0
 
-# --- Session ---
 session_duration_minutes: 30
 
-# --- Strategy ---
 strategy:
   min_edge: 0.03
   spread_threshold: 0.05
@@ -28,23 +21,18 @@ strategy:
     - spread_compression
     - stale_odds
 
-# --- Risk ---
 risk:
-  max_daily_loss_pct: 0.25      # 25% (was 15% — too tight for $100)
-  max_drawdown_pct: 0.35        # 35% (was 25%)
+  max_daily_loss_pct: 0.25
+  max_drawdown_pct: 0.35
   max_open_positions: 3
   cooldown_after_loss: 2
 
-# --- Timing ---
-cycle_interval_seconds: 30
-market_duration_minutes: 5
+cycle_interval_seconds: 20
 
-# --- Dashboard ---
 dashboard:
   enabled: true
   host: "0.0.0.0"
   port: 5050
 
-# --- Logging ---
 log_level: INFO
 db_path: "nostradam.db"
