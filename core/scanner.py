@@ -1,10 +1,8 @@
 """
 Scanner: Discovers active BTC 5-minute prediction markets on Polymarket.
 
-Polymarket's BTC minute markets follow patterns like:
-  "Will Bitcoin be above $XXXXX at HH:MM UTC?"
-  
-We search the CLOB API for active markets matching BTC/Bitcoin + minute/5-min patterns.
+Market slug pattern: btc-updown-5m-{UNIX_TIMESTAMP}
+Markets resolve every 5 minutes on round timestamps.
 """
 
 import logging
@@ -14,7 +12,6 @@ from datetime import datetime, timezone
 
 log = logging.getLogger("nostradam.scanner")
 
-# Polymarket APIs
 GAMMA_API = "https://gamma-api.polymarket.com"
 CLOB_API = "https://clob.polymarket.com"
 
@@ -22,142 +19,145 @@ CLOB_API = "https://clob.polymarket.com"
 class MarketScanner:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.api_key = cfg["api"]["key"]
-        self.known_markets = {}  # id -> market dict
+        self.known_markets = {}
         self.session = requests.Session()
-        self.session.headers.update({
-            "Content-Type": "application/json",
-        })
-        if self.api_key:
-            self.session.headers["POLY_API_KEY"] = self.api_key
+        self.session.headers.update({"Content-Type": "application/json"})
 
     def fetch_btc_minute_markets(self):
-        """Search for active BTC 5-minute prediction markets."""
+        """Find active BTC 5-min markets using the known slug pattern."""
+        markets = []
+        markets += self._fetch_by_slug_pattern()
+        markets += self._search_gamma_api()
+
+        seen = set()
+        unique = []
+        for m in markets:
+            key = m.get("id") or m.get("slug", "")
+            if key and key not in seen:
+                seen.add(key)
+                unique.append(m)
+                self.known_markets[key] = m
+
+        log.info(f"Found {len(unique)} active BTC 5-min markets")
+        return unique
+
+    def _fetch_by_slug_pattern(self):
+        """Generate slugs based on btc-updown-5m-{timestamp} pattern."""
+        markets = []
+        now = int(time.time())
+        current_window = (now // 300) * 300
+
+        timestamps = [
+            current_window - 600,
+            current_window - 300,
+            current_window,
+            current_window + 300,
+        ]
+
+        for ts in timestamps:
+            slug = f"btc-updown-5m-{ts}"
+            market = self._fetch_market_by_slug(slug)
+            if market:
+                markets.append(market)
+
+        return markets
+
+    def _fetch_market_by_slug(self, slug):
+        """Fetch a specific market by slug from Gamma API."""
+        try:
+            resp = self.session.get(
+                f"{GAMMA_API}/markets",
+                params={"slug": slug, "limit": 1},
+                timeout=10,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+            if isinstance(data, list) and len(data) > 0:
+                return self._normalize_market(data[0])
+            elif isinstance(data, dict) and data.get("id"):
+                return self._normalize_market(data)
+        except Exception as e:
+            log.debug(f"Slug fetch failed for {slug}: {e}")
+        return None
+
+    def _search_gamma_api(self):
+        """Broader search for BTC minute markets."""
         markets = []
         try:
-            # Search via Gamma API (public, no auth needed)
-            # BTC minute markets typically have "Bitcoin" + price target + time
             params = {
                 "active": "true",
                 "closed": "false",
-                "limit": 50,
+                "limit": 20,
                 "order": "endDate",
                 "ascending": "true",
-                "tag": "crypto",
             }
             resp = self.session.get(f"{GAMMA_API}/markets", params=params, timeout=10)
             resp.raise_for_status()
             data = resp.json()
 
-            for m in data:
-                q = (m.get("question", "") + " " + m.get("description", "")).lower()
-                # Filter for BTC 5-minute / minute markets
-                is_btc = any(kw in q for kw in ["bitcoin", "btc"])
-                is_minute = any(kw in q for kw in [
-                    "5 minute", "5-minute", "5min",
-                    "at ", ":00", ":05", ":10", ":15", ":20", ":25", ":30", ":35", ":40", ":45", ":50", ":55"
-                ])
-                if is_btc and is_minute:
+            for m in data if isinstance(data, list) else []:
+                slug = m.get("slug", "")
+                question = m.get("question", "").lower()
+                is_btc_5m = (
+                    slug.startswith("btc-updown-5m")
+                    or ("bitcoin" in question and "5" in question and "minute" in question)
+                    or ("btc" in question and ("above" in question or "below" in question))
+                )
+                if is_btc_5m:
                     market = self._normalize_market(m)
                     if market:
                         markets.append(market)
-
-            # Also try CLOB direct search
-            markets += self._search_clob_markets()
-
         except Exception as e:
-            log.error(f"Scanner error: {e}")
-
-        # Deduplicate
-        seen = set()
-        unique = []
-        for m in markets:
-            if m["id"] not in seen:
-                seen.add(m["id"])
-                unique.append(m)
-                self.known_markets[m["id"]] = m
-
-        log.info(f"Found {len(unique)} active BTC minute markets")
-        return unique
-
-    def _search_clob_markets(self):
-        """Search CLOB API directly for markets."""
-        markets = []
-        try:
-            # The CLOB API /markets endpoint
-            resp = self.session.get(
-                f"{CLOB_API}/markets",
-                params={"next_cursor": "MA=="},
-                timeout=10
-            )
-            resp.raise_for_status()
-            data = resp.json()
-
-            for m in data.get("data", data) if isinstance(data, dict) else data:
-                q = m.get("question", "").lower()
-                is_btc = "bitcoin" in q or "btc" in q
-                is_short_term = any(kw in q for kw in ["minute", "5 min", "above", "below"])
-                if is_btc and is_short_term:
-                    market = self._normalize_clob_market(m)
-                    if market:
-                        markets.append(market)
-
-        except Exception as e:
-            log.debug(f"CLOB search error: {e}")
+            log.error(f"Gamma API search error: {e}")
         return markets
 
     def _normalize_market(self, raw):
-        """Normalize Gamma API market to our format."""
+        """Normalize Gamma API market to internal format."""
         try:
             tokens = raw.get("clobTokenIds", "")
             if isinstance(tokens, str):
-                tokens = [t.strip() for t in tokens.strip("[]").split(",") if t.strip()]
+                tokens = [t.strip().strip('"') for t in tokens.strip("[]").split(",") if t.strip()]
+            elif isinstance(tokens, list):
+                tokens = [str(t) for t in tokens]
+
+            prices = raw.get("outcomePrices", "")
+            if isinstance(prices, str):
+                prices = [p.strip().strip('"') for p in prices.strip("[]").split(",") if p.strip()]
+
+            yes_price = float(prices[0]) if prices else None
+            no_price = float(prices[1]) if len(prices) > 1 else None
 
             return {
-                "id": str(raw.get("id", raw.get("conditionId", ""))),
+                "id": str(raw.get("conditionId", raw.get("id", ""))),
                 "condition_id": raw.get("conditionId", ""),
                 "question": raw.get("question", ""),
                 "slug": raw.get("slug", ""),
                 "end_time": raw.get("endDate", ""),
                 "token_ids": tokens,
-                "outcome_yes": raw.get("outcomePrices", ""),
+                "yes_price": yes_price,
+                "no_price": no_price,
+                "volume": raw.get("volume", 0),
+                "liquidity": raw.get("liquidity", 0),
                 "active": raw.get("active", True),
+                "resolved": raw.get("resolved", False),
             }
         except Exception as e:
             log.debug(f"Normalize error: {e}")
             return None
 
-    def _normalize_clob_market(self, raw):
-        """Normalize CLOB API market."""
-        try:
-            tokens = raw.get("tokens", [])
-            token_ids = [t.get("token_id", "") for t in tokens] if tokens else []
-
-            return {
-                "id": raw.get("condition_id", str(raw.get("id", ""))),
-                "condition_id": raw.get("condition_id", ""),
-                "question": raw.get("question", ""),
-                "slug": raw.get("market_slug", ""),
-                "end_time": raw.get("end_date_iso", ""),
-                "token_ids": token_ids,
-                "active": raw.get("active", True),
-            }
-        except Exception as e:
-            log.debug(f"CLOB normalize error: {e}")
-            return None
-
     def get_order_book(self, token_id):
-        """Fetch order book for a specific token (YES or NO side)."""
+        """Fetch order book for a token (public endpoint, no auth)."""
         try:
             resp = self.session.get(
                 f"{CLOB_API}/book",
                 params={"token_id": token_id},
-                timeout=10
+                timeout=10,
             )
             resp.raise_for_status()
             return resp.json()
         except Exception as e:
-            log.error(f"Order book fetch error for {token_id}: {e}")
+            log.debug(f"Order book error: {e}")
             return None
 
     def get_market_trades(self, condition_id):
@@ -166,7 +166,7 @@ class MarketScanner:
             resp = self.session.get(
                 f"{CLOB_API}/trades",
                 params={"condition_id": condition_id},
-                timeout=10
+                timeout=10,
             )
             resp.raise_for_status()
             return resp.json()
@@ -181,20 +181,17 @@ class MarketScanner:
 
         bids = book_data.get("bids", [])
         asks = book_data.get("asks", [])
-
-        if not bids or not asks:
+        if not bids and not asks:
             return None
 
-        # Sort: bids descending, asks ascending
         bids = sorted(bids, key=lambda x: float(x.get("price", 0)), reverse=True)
         asks = sorted(asks, key=lambda x: float(x.get("price", 0)))
 
         best_bid = float(bids[0]["price"]) if bids else 0
         best_ask = float(asks[0]["price"]) if asks else 1
         spread = best_ask - best_bid
-        mid = (best_bid + best_ask) / 2
+        mid = (best_bid + best_ask) / 2 if (bids and asks) else best_bid or best_ask
 
-        # Book depth (total size within 5% of mid)
         depth = sum(
             float(o.get("size", 0))
             for o in bids + asks
@@ -209,4 +206,13 @@ class MarketScanner:
             "depth": depth,
             "n_bids": len(bids),
             "n_asks": len(asks),
+        }
+
+    def get_price_from_gamma(self, market):
+        """Get current prices directly from Gamma data (no auth needed)."""
+        return {
+            "yes_price": market.get("yes_price"),
+            "no_price": market.get("no_price"),
+            "volume": market.get("volume", 0),
+            "liquidity": market.get("liquidity", 0),
         }
