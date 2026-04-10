@@ -1,0 +1,42 @@
+# ============================================
+# NOSTRADAM CONFIG — Phase 1 Paper Trading
+# ============================================
+
+# --- Mode ---
+paper_trade: true  # KEEP TRUE until you trust the bot
+
+# --- Capital ---
+bankroll: 100.0          # Starting paper bankroll (USD)
+max_bet_pct: 0.05        # Max 5% of bankroll per trade
+min_bet: 1.0             # Minimum bet size (USD)
+max_bet: 20.0            # Hard cap per trade (USD)
+
+# --- Inefficiency Detection ---
+strategy:
+  min_edge: 0.03          # Minimum edge (3%) to trigger a trade
+  spread_threshold: 0.05  # Max spread to consider market liquid enough
+  volume_min: 500         # Min market volume (USD) to trade
+  lookback_trades: 12     # Number of past resolved markets to analyze
+  mean_reversion_window: 5  # Minutes to look for odds mean-reversion
+  momentum_threshold: 0.08  # Odds shift in one direction to flag momentum
+
+# --- Risk Management ---
+risk:
+  max_daily_loss_pct: 0.15    # Stop trading if down 15% in a day
+  max_drawdown_pct: 0.25      # Kill switch: halt if 25% drawdown from peak
+  max_open_positions: 3       # Max simultaneous paper positions
+  cooldown_after_loss: 2      # Skip N markets after a loss streak of 3+
+
+# --- Timing ---
+cycle_interval_seconds: 30   # How often to check for new markets
+market_duration_minutes: 5   # Duration of each prediction market
+
+# --- Dashboard ---
+dashboard:
+  enabled: true
+  host: "0.0.0.0"
+  port: 5050
+
+# --- Logging ---
+log_level: INFO   # DEBUG for verbose
+db_path: "nostradam.db"
