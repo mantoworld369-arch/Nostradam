@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
-"""
-NOSTRADAM — Phase 1: Paper Trading MVP with Self-Optimization
+"""NOSTRADAM v0.3 — Self-Optimizing Paper Trading"""
 
-30-minute session loop:
-1. Trade for 30 minutes
-2. Pause, analyze, optimize
-3. Start next session with adjusted settings
-"""
-
-import os
 import sys
 import time
 import logging
@@ -16,10 +8,8 @@ import threading
 from datetime import datetime, timezone
 
 from core.config import load_config
-from core.database import (
-    get_db, init_db, log_market, log_snapshot, get_snapshots_for_market,
-    get_open_trades, start_session, end_session
-)
+from core.database import (get_db, init_db, log_market, log_snapshot,
+                           get_snapshots_for_market, get_open_trades, start_session)
 from core.scanner import MarketScanner
 from core.analyzer import Analyzer
 from core.trader import PaperTrader
@@ -36,7 +26,6 @@ def setup_logging(level):
 
 
 def trading_loop(cfg, conn, scanner, analyzer, trader, session_duration_sec):
-    """Run one trading session for the given duration."""
     log = logging.getLogger("nostradam.main")
     cycle = cfg["cycle_interval_seconds"]
     start_time = time.time()
@@ -51,25 +40,21 @@ def trading_loop(cfg, conn, scanner, analyzer, trader, session_duration_sec):
                     continue
 
                 log_market(conn, market)
-
                 token_ids = market.get("token_ids", [])
                 if len(token_ids) < 1:
                     continue
 
-                # Fetch order books
                 yes_token = token_ids[0] if token_ids else None
                 no_token = token_ids[1] if len(token_ids) > 1 else None
 
                 book_yes_raw = scanner.get_order_book(yes_token) if yes_token else None
                 book_no_raw = scanner.get_order_book(no_token) if no_token else None
-
                 parsed_yes = scanner.parse_book(book_yes_raw) if book_yes_raw else None
                 parsed_no = scanner.parse_book(book_no_raw) if book_no_raw else None
 
                 if not parsed_yes:
                     continue
 
-                # Log snapshot
                 snap = {
                     "best_bid_yes": parsed_yes["best_bid"],
                     "best_ask_yes": parsed_yes["best_ask"],
@@ -84,7 +69,6 @@ def trading_loop(cfg, conn, scanner, analyzer, trader, session_duration_sec):
                 }
                 log_snapshot(conn, mid, snap)
 
-                # Analyze
                 snapshots_raw = get_snapshots_for_market(conn, mid)
                 snapshots = [dict(s) for s in snapshots_raw]
 
@@ -93,16 +77,12 @@ def trading_loop(cfg, conn, scanner, analyzer, trader, session_duration_sec):
 
                 signals = analyzer.analyze(snapshots, parsed_yes, parsed_no)
 
-                # Trade — now passing book data for realistic entry pricing
                 for signal in signals:
                     signal.meta["current_mid"] = parsed_yes["mid"]
                     trader.execute(signal, mid, book_yes=parsed_yes, book_no=parsed_no)
 
-            # Update unrealized P&L on open positions
             trader.update_open_positions(scanner)
-
-            # Check for resolved markets
-            _check_resolutions(conn, scanner, trader, log)
+            check_resolutions(conn, scanner, trader, log)
 
         except KeyboardInterrupt:
             raise
@@ -112,8 +92,8 @@ def trading_loop(cfg, conn, scanner, analyzer, trader, session_duration_sec):
         time.sleep(cycle)
 
 
-def _check_resolutions(conn, scanner, trader, log):
-    """Check if markets with open trades have resolved."""
+def check_resolutions(conn, scanner, trader, log):
+    """Check resolutions — poll immediately when market ends, no 2-min delay."""
     open_trades = get_open_trades(conn)
 
     for trade in open_trades:
@@ -134,12 +114,14 @@ def _check_resolutions(conn, scanner, trader, log):
         if row["resolved"]:
             outcome = row["outcome"]
         else:
-            outcome = _fetch_resolution(scanner, mid)
+            # Try to fetch immediately
+            outcome = fetch_resolution(mid)
             if outcome:
                 conn.execute("UPDATE markets SET resolved=1, outcome=? WHERE id=?", (outcome, mid))
                 conn.commit()
-            elif (now - end_dt).total_seconds() > 120:
-                log.warning(f"Could not resolve {mid[:12]}... — defaulting NO")
+            elif (now - end_dt).total_seconds() > 60:
+                # Fallback after 60s (reduced from 120)
+                log.warning(f"Resolution timeout {mid[:12]}... — defaulting NO")
                 outcome = "NO"
                 conn.execute("UPDATE markets SET resolved=1, outcome=? WHERE id=?", (outcome, mid))
                 conn.commit()
@@ -150,7 +132,7 @@ def _check_resolutions(conn, scanner, trader, log):
             trader.resolve_market(mid, outcome)
 
 
-def _fetch_resolution(scanner, market_id):
+def fetch_resolution(market_id):
     try:
         import requests
         resp = requests.get(f"https://gamma-api.polymarket.com/markets/{market_id}", timeout=10)
@@ -184,76 +166,60 @@ def main():
     trader = PaperTrader(cfg, conn)
     optimizer = Optimizer(cfg, conn)
 
-    # Dashboard
     if cfg["dashboard"]["enabled"]:
-        app = create_app(conn, trader)
-        dash_thread = threading.Thread(
-            target=lambda: app.run(
-                host=cfg["dashboard"]["host"],
-                port=cfg["dashboard"]["port"],
-                debug=False, use_reloader=False,
-            ),
+        app = create_app(conn, trader, scanner)
+        threading.Thread(
+            target=lambda: app.run(host=cfg["dashboard"]["host"], port=cfg["dashboard"]["port"], debug=False, use_reloader=False),
             daemon=True,
-        )
-        dash_thread.start()
+        ).start()
         log.info(f"Dashboard at http://localhost:{cfg['dashboard']['port']}")
 
     session_minutes = cfg.get("session_duration_minutes", 30)
     session_num = 0
 
     log.info("=" * 60)
-    log.info("  NOSTRADAM v0.2 — Session-Based Paper Trading")
+    log.info("  NOSTRADAM v0.3 — Session-Based Paper Trading")
     log.info(f"  Bankroll: ${cfg['bankroll']} | Session: {session_minutes}min")
-    log.info(f"  Min edge: {cfg['strategy']['min_edge']*100}% | Max bet: {cfg['max_bet_pct']*100}%")
     log.info("=" * 60)
 
     while True:
         try:
             session_num += 1
-
-            # Start session
             session_id = start_session(conn, session_minutes,
                                        {k: v for k, v in cfg.items() if k != "api"})
             trader.set_session(session_id)
 
             log.info(f"\n{'#'*60}")
-            log.info(f"  SESSION {session_num} (id={session_id}) — STARTING")
-            log.info(f"  Duration: {session_minutes} minutes")
-            log.info(f"  Enabled signals: {cfg['strategy'].get('enabled_signals', 'all')}")
-            log.info(f"  Min edge: {cfg['strategy']['min_edge']:.2%} | Bet size: {cfg['max_bet_pct']:.1%}")
+            log.info(f"  SESSION {session_num} (id={session_id}) — START")
+            log.info(f"  Signals: {cfg['strategy'].get('enabled_signals', 'all')}")
+            log.info(f"  Min edge: {cfg['strategy']['min_edge']:.2%} | Bet: {cfg['max_bet_pct']:.1%}")
             log.info(f"  Bankroll: ${trader.bankroll:.2f}")
             log.info(f"{'#'*60}\n")
 
-            # Trade for session duration
+            # ALWAYS wait full session duration
             trading_loop(cfg, conn, scanner, analyzer, trader, session_minutes * 60)
 
-            log.info(f"\n{'#'*60}")
-            log.info(f"  SESSION {session_num} — ENDED, OPTIMIZING...")
-            log.info(f"{'#'*60}\n")
+            log.info(f"\n  SESSION {session_num} ENDED — OPTIMIZING...\n")
 
-            # Wait a bit for final resolutions
+            # Wait for final resolutions
             time.sleep(15)
-            _check_resolutions(conn, scanner, trader, log)
+            check_resolutions(conn, scanner, trader, log)
 
             # Optimize
             new_cfg, notes = optimizer.optimize(session_id)
-
-            # Apply optimized config
             cfg["strategy"] = new_cfg["strategy"]
             cfg["max_bet_pct"] = new_cfg["max_bet_pct"]
             analyzer.update_params(cfg)
 
-            # Re-enable all signals every 5 sessions to re-test
+            # Re-enable all signals every 5 sessions
             if session_num % 5 == 0:
                 cfg["strategy"]["enabled_signals"] = [
                     "mean_reversion", "book_imbalance", "momentum",
                     "spread_compression", "stale_odds"
                 ]
                 analyzer.update_params(cfg)
-                log.info("Re-enabled all signals for periodic re-evaluation")
+                log.info("Re-enabled all signals for re-evaluation")
 
-            # Brief pause between sessions
-            log.info("Pausing 15s before next session...")
             time.sleep(15)
 
         except KeyboardInterrupt:
