@@ -43,10 +43,15 @@ def init_db(conn):
     CREATE TABLE IF NOT EXISTS trades (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         market_id TEXT,
+        session_id INTEGER DEFAULT 0,
         ts_entry TEXT,
         ts_exit TEXT,
-        side TEXT,           -- 'YES' or 'NO'
+        side TEXT,
         entry_price REAL,
+        entry_mid REAL,
+        entry_ask REAL,
+        entry_spread REAL,
+        current_price REAL,
         exit_price REAL,
         size REAL,
         pnl REAL,
@@ -58,24 +63,43 @@ def init_db(conn):
         FOREIGN KEY(market_id) REFERENCES markets(id)
     );
 
-    CREATE TABLE IF NOT EXISTS stats (
+    CREATE TABLE IF NOT EXISTS sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ts TEXT,
-        bankroll REAL,
-        total_trades INTEGER,
-        wins INTEGER,
-        losses INTEGER,
-        win_rate REAL,
-        total_pnl REAL,
-        avg_edge REAL,
-        sharpe REAL,
-        max_drawdown REAL
+        started_at TEXT,
+        ended_at TEXT,
+        duration_minutes INTEGER,
+        total_trades INTEGER DEFAULT 0,
+        wins INTEGER DEFAULT 0,
+        losses INTEGER DEFAULT 0,
+        total_pnl REAL DEFAULT 0,
+        win_rate REAL DEFAULT 0,
+        avg_edge REAL DEFAULT 0,
+        best_signal TEXT,
+        worst_signal TEXT,
+        config_snapshot TEXT,
+        optimization_notes TEXT
     );
 
     CREATE INDEX IF NOT EXISTS idx_snapshots_market ON snapshots(market_id, ts);
     CREATE INDEX IF NOT EXISTS idx_trades_market ON trades(market_id);
+    CREATE INDEX IF NOT EXISTS idx_trades_session ON trades(session_id);
     """)
+
+    # Add columns if upgrading from old schema
+    _safe_add_column(conn, "trades", "session_id", "INTEGER DEFAULT 0")
+    _safe_add_column(conn, "trades", "entry_mid", "REAL")
+    _safe_add_column(conn, "trades", "entry_ask", "REAL")
+    _safe_add_column(conn, "trades", "entry_spread", "REAL")
+    _safe_add_column(conn, "trades", "current_price", "REAL")
+
     conn.commit()
+
+
+def _safe_add_column(conn, table, column, col_type):
+    try:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
+    except sqlite3.OperationalError:
+        pass  # column already exists
 
 
 def log_market(conn, market):
@@ -102,32 +126,44 @@ def log_snapshot(conn, market_id, snap):
 
 def log_trade(conn, trade):
     conn.execute(
-        "INSERT INTO trades (market_id, ts_entry, side, entry_price, size, edge_at_entry, signal_type, meta) VALUES (?,?,?,?,?,?,?,?)",
-        (trade["market_id"], datetime.now(timezone.utc).isoformat(),
-         trade["side"], trade["entry_price"], trade["size"],
-         trade["edge"], trade["signal_type"], json.dumps(trade.get("meta", {})))
+        """INSERT INTO trades (market_id, session_id, ts_entry, side, entry_price, entry_mid, entry_ask, entry_spread, size, edge_at_entry, signal_type, meta)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (trade["market_id"], trade.get("session_id", 0),
+         datetime.now(timezone.utc).isoformat(),
+         trade["side"], trade["entry_price"],
+         trade.get("entry_mid", 0), trade.get("entry_ask", 0), trade.get("entry_spread", 0),
+         trade["size"], trade["edge"], trade["signal_type"],
+         json.dumps(trade.get("meta", {})))
+    )
+    conn.commit()
+
+
+def update_trade_current_price(conn, trade_id, current_price):
+    conn.execute(
+        "UPDATE trades SET current_price=? WHERE id=?",
+        (current_price, trade_id)
     )
     conn.commit()
 
 
 def resolve_trade(conn, trade_id, exit_price, pnl, won):
     conn.execute(
-        "UPDATE trades SET ts_exit=?, exit_price=?, pnl=?, resolved=1, won=? WHERE id=?",
-        (datetime.now(timezone.utc).isoformat(), exit_price, pnl, int(won), trade_id)
+        "UPDATE trades SET ts_exit=?, exit_price=?, pnl=?, resolved=1, won=?, current_price=? WHERE id=?",
+        (datetime.now(timezone.utc).isoformat(), exit_price, pnl, int(won), exit_price, trade_id)
     )
     conn.commit()
 
 
 def get_recent_trades(conn, limit=50):
-    return conn.execute(
-        "SELECT * FROM trades ORDER BY id DESC LIMIT ?", (limit,)
-    ).fetchall()
+    return conn.execute("SELECT * FROM trades ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
 
 
 def get_open_trades(conn):
-    return conn.execute(
-        "SELECT * FROM trades WHERE resolved=0"
-    ).fetchall()
+    return conn.execute("SELECT * FROM trades WHERE resolved=0").fetchall()
+
+
+def get_session_trades(conn, session_id):
+    return conn.execute("SELECT * FROM trades WHERE session_id=?", (session_id,)).fetchall()
 
 
 def get_performance(conn):
@@ -144,13 +180,109 @@ def get_performance(conn):
     return dict(row) if row else {}
 
 
+def get_session_performance(conn, session_id):
+    row = conn.execute("""
+        SELECT
+            COUNT(*) as total,
+            SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins,
+            SUM(CASE WHEN won=0 AND resolved=1 THEN 1 ELSE 0 END) as losses,
+            SUM(CASE WHEN resolved=1 THEN pnl ELSE 0 END) as total_pnl,
+            AVG(CASE WHEN resolved=1 THEN edge_at_entry END) as avg_edge
+        FROM trades WHERE session_id=?
+    """, (session_id,)).fetchone()
+    return dict(row) if row else {}
+
+
+def get_signal_performance(conn, session_id=None):
+    """Get win rate broken down by signal type."""
+    where = f"WHERE session_id={session_id}" if session_id else ""
+    rows = conn.execute(f"""
+        SELECT signal_type,
+            COUNT(*) as total,
+            SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins,
+            SUM(CASE WHEN resolved=1 THEN pnl ELSE 0 END) as pnl,
+            AVG(edge_at_entry) as avg_edge
+        FROM trades {where}
+        WHERE resolved=1
+        GROUP BY signal_type
+    """).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_edge_range_performance(conn, session_id=None):
+    """Get performance by edge bucket."""
+    where = f"AND session_id={session_id}" if session_id else ""
+    rows = conn.execute(f"""
+        SELECT
+            CASE
+                WHEN edge_at_entry < 0.05 THEN 'low_3-5'
+                WHEN edge_at_entry < 0.10 THEN 'mid_5-10'
+                WHEN edge_at_entry < 0.20 THEN 'high_10-20'
+                ELSE 'extreme_20+'
+            END as edge_bucket,
+            COUNT(*) as total,
+            SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins,
+            SUM(CASE WHEN resolved=1 THEN pnl ELSE 0 END) as pnl
+        FROM trades WHERE resolved=1 {where}
+        GROUP BY edge_bucket
+    """).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_side_performance(conn, session_id=None):
+    """Get performance by YES/NO side."""
+    where = f"AND session_id={session_id}" if session_id else ""
+    rows = conn.execute(f"""
+        SELECT side,
+            COUNT(*) as total,
+            SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins,
+            SUM(CASE WHEN resolved=1 THEN pnl ELSE 0 END) as pnl
+        FROM trades WHERE resolved=1 {where}
+        GROUP BY side
+    """).fetchall()
+    return [dict(r) for r in rows]
+
+
+def start_session(conn, duration_minutes, config_snapshot):
+    cur = conn.execute(
+        "INSERT INTO sessions (started_at, duration_minutes, config_snapshot) VALUES (?,?,?)",
+        (datetime.now(timezone.utc).isoformat(), duration_minutes, json.dumps(config_snapshot))
+    )
+    conn.commit()
+    return cur.lastrowid
+
+
+def end_session(conn, session_id, optimization_notes=""):
+    perf = get_session_performance(conn, session_id)
+    total = perf.get("total", 0)
+    wins = perf.get("wins", 0) or 0
+    losses = perf.get("losses", 0) or 0
+    resolved = wins + losses
+
+    signal_perf = get_signal_performance(conn, session_id)
+    best = max(signal_perf, key=lambda x: x.get("pnl", 0))["signal_type"] if signal_perf else ""
+    worst = min(signal_perf, key=lambda x: x.get("pnl", 0))["signal_type"] if signal_perf else ""
+
+    conn.execute(
+        """UPDATE sessions SET ended_at=?, total_trades=?, wins=?, losses=?, total_pnl=?,
+           win_rate=?, avg_edge=?, best_signal=?, worst_signal=?, optimization_notes=?
+           WHERE id=?""",
+        (datetime.now(timezone.utc).isoformat(), total, wins, losses,
+         perf.get("total_pnl", 0) or 0,
+         round(wins / resolved * 100, 1) if resolved > 0 else 0,
+         perf.get("avg_edge", 0) or 0,
+         best, worst, optimization_notes, session_id)
+    )
+    conn.commit()
+
+
+def get_sessions(conn, limit=20):
+    return conn.execute("SELECT * FROM sessions ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+
+
 def get_snapshots_for_market(conn, market_id):
-    return conn.execute(
-        "SELECT * FROM snapshots WHERE market_id=? ORDER BY ts", (market_id,)
-    ).fetchall()
+    return conn.execute("SELECT * FROM snapshots WHERE market_id=? ORDER BY ts", (market_id,)).fetchall()
 
 
 def get_recent_snapshots(conn, limit=200):
-    return conn.execute(
-        "SELECT * FROM snapshots ORDER BY id DESC LIMIT ?", (limit,)
-    ).fetchall()
+    return conn.execute("SELECT * FROM snapshots ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
