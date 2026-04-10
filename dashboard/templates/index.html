@@ -284,13 +284,13 @@
 
       // Market bar
       if (m && m.active) {
-        document.getElementById('mb-btc').textContent = m.btc_target ? '$' + Number(m.btc_target).toLocaleString() : '—';
+        document.getElementById('mc-btc').textContent=cur.btc_target?'$'+Number(cur.btc_target).toLocaleString():cur.question?cur.question.substring(0,40):'—';
         document.getElementById('mb-odds').innerHTML = `<span class="green">${m.yes_price ? (m.yes_price * 100).toFixed(1) + '%' : '—'}</span> / <span class="red">${m.no_price ? (m.no_price * 100).toFixed(1) + '%' : '—'}</span>`;
         document.getElementById('mb-vol').textContent = m.volume ? '$' + Number(m.volume).toLocaleString(undefined,{maximumFractionDigits:0}) : '—';
         document.getElementById('mb-slug').textContent = m.slug || '—';
         marketEndTime = m.end_time || null;
       } else {
-        document.getElementById('mb-btc').textContent = '—';
+        document.getElementById('mn-btc').textContent=nxt.btc_target?'$'+Number(nxt.btc_target).toLocaleString():nxt.question?nxt.question.substring(0,40):'—';
         document.getElementById('mb-odds').textContent = '— / —';
         document.getElementById('mb-slug').textContent = 'Waiting for market...';
         marketEndTime = null;
