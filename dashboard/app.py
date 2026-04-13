@@ -29,7 +29,7 @@ def create_app(conn, trader, scanner):
             d=dict(t)
             if not d.get("resolved") and d.get("current_price") and d.get("entry_price"):
                 c,e=d["current_price"],d["entry_price"]
-                d["unrealized_pnl"]=round(d["size"]*(c/e)-d["size"],2) if c>0 and e>0 else 0
+                d["unrealized_pnl"]=round(min(d["size"]*(c/e),d["size"]*3.0)-d["size"],2) if c>0 and e>0 else 0
             else: d["unrealized_pnl"]=None
             result.append(d)
         return jsonify(result)
