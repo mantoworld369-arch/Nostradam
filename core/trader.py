@@ -29,7 +29,7 @@ class PaperTrader:
             ea=mp+0.02 if signal.side=="YES" else (1-mp)+0.02; es=0.04
         em=mp if signal.side=="YES" else (1-mp)
 
-        if ea<0.02 or ea>0.98: return None
+        if ea<0.10 or ea>0.90: return None
         re_edge=(mp+signal.edge)-ea if signal.side=="YES" else ((1-mp)+signal.edge)-ea
         if re_edge<self.cfg["strategy"]["min_edge"]*0.5: return None
 
@@ -64,6 +64,11 @@ class PaperTrader:
             won=(t["side"]==outcome)
             if won:
                 payout=t["size"]/t["entry_price"] if t["entry_price"]>0 else 0
+                # Cap payout at 3x stake — anything higher means garbage entry price
+                max_payout=t["size"]*3.0
+                if payout>max_payout:
+                    log.warning(f"Payout capped: ${payout:.2f} -> ${max_payout:.2f} (entry @{t['entry_price']:.3f})")
+                    payout=max_payout
                 pnl=payout-t["size"]; self.bankroll+=payout; self.consecutive_losses=0
             else:
                 pnl=-t["size"]; self.consecutive_losses+=1
