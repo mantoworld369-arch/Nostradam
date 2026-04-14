@@ -17,7 +17,15 @@ class MarketScanner:
         seen=set(); unique=[]
         for m in markets:
             k=m.get("id") or m.get("slug","")
-            if k and k not in seen: seen.add(k); unique.append(m); self.known_markets[k]=m
+            if not k or k in seen: continue
+            seen.add(k)
+            # Lock token mapping: once we know YES=token[0], NO=token[1], keep it
+            if k in self.known_markets:
+                old=self.known_markets[k]
+                if old.get("token_ids") and len(old["token_ids"])>=2:
+                    m["token_ids"]=old["token_ids"]  # preserve locked mapping
+            self.known_markets[k]=m
+            unique.append(m)
         self._update_state(unique)
         log.info(f"Found {len(unique)} active BTC 5-min markets")
         return unique
