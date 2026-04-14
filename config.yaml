@@ -20,6 +20,7 @@ strategy:
     - spread_compression
     - volatility_spike
     - odds_divergence
+  side_bias: 1.0  # >1 favors YES, <1 favors NO, auto-adjusted by optimizer
 
 risk:
   max_daily_loss_pct: 0.30
