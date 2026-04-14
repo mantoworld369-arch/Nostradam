@@ -81,8 +81,25 @@ class MarketScanner:
             elif isinstance(tokens,list): tokens=[str(t) for t in tokens]
             prices=raw.get("outcomePrices","")
             if isinstance(prices,str): prices=[p.strip().strip('"') for p in prices.strip("[]").split(",") if p.strip()]
-            yp=float(prices[0]) if prices else None
-            np_=float(prices[1]) if len(prices)>1 else None
+            # Determine YES/NO ordering from outcomes field
+            outcomes=raw.get("outcomes","")
+            if isinstance(outcomes,str):
+                try: outcomes=eval(outcomes)  # e.g. '["Yes","No"]'
+                except: outcomes=[]
+            if not isinstance(outcomes,list): outcomes=[]
+            outcomes=[o.strip().upper() for o in outcomes]
+            # Find YES index — default to 0 if outcomes field missing
+            yes_idx=0
+            if outcomes:
+                for i,o in enumerate(outcomes):
+                    if o=="YES": yes_idx=i; break
+            no_idx=1-yes_idx
+            # Map tokens and prices to guaranteed YES=0, NO=1
+            if len(tokens)>=2:
+                tokens=[tokens[yes_idx],tokens[no_idx]]
+            yp=float(prices[yes_idx]) if len(prices)>yes_idx else None
+            np_=float(prices[no_idx]) if len(prices)>no_idx else None
+            log.debug(f"Token mapping: outcomes={outcomes}, yes_idx={yes_idx}, yes_price={yp}, no_price={np_}")
             return {"id":str(raw.get("conditionId",raw.get("id",""))),"condition_id":raw.get("conditionId",""),
                     "question":raw.get("question",""),"slug":raw.get("slug",""),"end_time":raw.get("endDate",""),
                     "token_ids":tokens,"yes_price":yp,"no_price":np_,
@@ -112,9 +129,8 @@ class MarketScanner:
             if r.ok:
                 d=r.json()
                 if d.get("resolved"):
-                    p=d.get("outcomePrices","")
-                    if isinstance(p,str): p=p.strip("[]").split(",")
-                    if len(p)>=2: return "YES" if float(str(p[0]).strip().strip('"'))>0.5 else "NO"
+                    outcome=self._resolve_outcome(d)
+                    if outcome: return outcome
         except: pass
         m=self.known_markets.get(mid,{}); slug=m.get("slug","")
         if slug:
@@ -123,8 +139,25 @@ class MarketScanner:
                 if r.ok:
                     d=r.json()
                     if isinstance(d,list) and d and d[0].get("resolved"):
-                        p=d[0].get("outcomePrices","")
-                        if isinstance(p,str): p=p.strip("[]").split(",")
-                        if len(p)>=2: return "YES" if float(str(p[0]).strip().strip('"'))>0.5 else "NO"
+                        outcome=self._resolve_outcome(d[0])
+                        if outcome: return outcome
             except: pass
         return None
+
+    def _resolve_outcome(self, d):
+        """Determine YES/NO outcome using outcomes field for correct index mapping."""
+        p=d.get("outcomePrices","")
+        if isinstance(p,str): p=p.strip("[]").split(",")
+        if len(p)<2: return None
+        outcomes=d.get("outcomes","")
+        if isinstance(outcomes,str):
+            try: outcomes=eval(outcomes)
+            except: outcomes=[]
+        if not isinstance(outcomes,list): outcomes=[]
+        outcomes=[o.strip().upper() for o in outcomes]
+        yes_idx=0
+        if outcomes:
+            for i,o in enumerate(outcomes):
+                if o=="YES": yes_idx=i; break
+        yes_price=float(str(p[yes_idx]).strip().strip('"'))
+        return "YES" if yes_price>0.5 else "NO"

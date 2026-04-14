@@ -1,4 +1,4 @@
-"""Analyzer v0.5: 7 strategies, smart side selection based on historical data."""
+"""Analyzer v0.5.1: 7 strategies + side bias from historical performance."""
 import logging, numpy as np
 log = logging.getLogger("nostradam.analyzer")
 
@@ -17,6 +17,8 @@ class Analyzer:
         self.min_edge=s["min_edge"]; self.spread_threshold=s["spread_threshold"]
         self.momentum_threshold=s["momentum_threshold"]; self.mr_window=s["mean_reversion_window"]
         self.enabled=s.get("enabled_signals",["trend_follow","contrarian","book_imbalance","momentum","spread_compression","volatility_spike","odds_divergence"])
+        # Side bias: >1.0 favors YES, <1.0 favors NO, 1.0 = neutral
+        self.side_bias=s.get("side_bias",1.0)
 
     def analyze(self, snapshots, book_yes, book_no):
         if len(snapshots)<3: return []
@@ -47,12 +49,28 @@ class Analyzer:
             s=self._odds_divergence(snapshots,cm)
             if s: signals.append(s)
 
+        # Apply side bias — scale confidence based on historical side performance
+        for s in signals:
+            s.confidence = self._apply_side_bias(s.side, s.confidence)
+
         signals=[s for s in signals if s.edge>=self.min_edge]
         if signals:
             best=max(signals,key=lambda s:s.edge*s.confidence)
-            log.info(f"Best signal: {best}")
+            log.info(f"Best signal: {best} (side_bias={self.side_bias:.2f})")
             return [best]
         return []
+
+    def _apply_side_bias(self, side, confidence):
+        """Adjust confidence based on side bias.
+        side_bias > 1.0 = YES wins more -> boost YES, penalize NO
+        side_bias < 1.0 = NO wins more -> boost NO, penalize YES
+        side_bias = 1.0 = neutral
+        """
+        if side == "YES":
+            return confidence * self.side_bias
+        else:  # NO
+            # Inverse: if side_bias=0.5 (NO favored), NO gets 1/0.5=2.0x boost
+            return confidence * (1.0 / self.side_bias) if self.side_bias > 0 else confidence * 2.0
 
     def _trend_follow(self, mids, cm, cs):
         """Follow the deviation direction (deviation UP -> YES)."""

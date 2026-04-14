@@ -76,3 +76,11 @@ def end_session(conn, sid, notes=""):
 
 def get_sessions(conn, limit=20): return conn.execute("SELECT * FROM sessions ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
 def get_snapshots_for_market(conn, mid): return conn.execute("SELECT * FROM snapshots WHERE market_id=? ORDER BY ts", (mid,)).fetchall()
+
+def get_side_performance(conn, last_n=None):
+    """Get YES vs NO win rates across recent resolved trades."""
+    q = "SELECT side, COUNT(*) as total, SUM(CASE WHEN won=1 THEN 1 ELSE 0 END) as wins, SUM(pnl) as pnl FROM trades WHERE resolved=1"
+    if last_n:
+        q += f" AND id >= (SELECT MAX(id)-{last_n} FROM trades)"
+    q += " GROUP BY side"
+    return {r["side"]: dict(r) for r in conn.execute(q).fetchall()}
